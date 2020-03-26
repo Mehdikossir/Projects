@@ -1,0 +1,72 @@
+Fonction ruzzleSolveur (grille : Grille ; dico : dictionnaire):listeOrdonnée
+Procedure rechercherDeMot (E/S : grille : Grille; i,j: Naturel Non Nul; casesContigues : CasesContigues, resultat : ListeOrdonnee, dico : Dictionnaire)
+initialisationGrille (S : Grille)
+afficher ( E : listeOrdonnée)
+________________________________________________________________________________________________________________________________________________________
+
+Main ()
+
+Déclaration: dico : dictionnaire
+            maGrille : Grille
+            liste: listeOrdonnée
+
+
+Début
+    chargerLeDictionnaire (dico)
+    initialisationGrille (maGrille)
+    liste <- ruzzleSolveur(maGrille, dico)
+    afficher (liste)
+Fin
+
+initialisationGrille (S : Grille)
+
+Début
+
+Fin
+
+afficher ( E : listeOrdonnée)
+
+début
+
+Fin
+
+
+Fonction ruzzleSolveur (grille : Grille ; dico : dictionnaire):listeOrdonnée
+
+Déclaration: casesContigues : CasesContigues
+	                i,j : Naturel Non Nul
+		   resultat : ListeOrdonnee
+
+Début
+	// attention l'ensemble des cases de la grille doivent etre initialisé comme pas prise
+	casesContigues <-casesContigues()
+	resultat <- listeOrdonnee ()
+	Pour i allant de 1 a 4
+		Pour j allant de 1 à 4
+			rechercheDeMot(grille,i,j,casesContigues,dico,resultat)
+		finPour
+	finPour
+	retourner listeOrdonnée
+Fin
+
+Procedure rechercherDeMot(E/S : grille : Grille; i,j: Naturel Non Nul; casesContigues : CasesContigues, resultat : ListeOrdonnee, dico : Dictionnaire)
+
+Déclération : x,y : 
+
+Début
+	changementDEtat(grille,i,j)
+    ajouterCase(caseContigues,obtenirCase(grille,i,j))
+	Si estPresent(casesContiguesEnMot(casesContigues),dico)
+		ajouterMotDansLaListe(casesContigues,resultat)
+	finSi
+	// aller dans toutes les differentes cases adjacentes	
+	Pour x allant de (i <= 0 ? 0 : -1) à (i >= 3 ? 0 : 1)
+		Pour y allant de (j <= 0 ? 0 : -1) à (j >= 3 ? 0 : 1)
+			Si non(estDejaUtilisé(obtenirCase(grille,i+x,j+y))) et estPrefixe (casesContigues,dico) 
+				rechercherDeMot(grille,i+x,j+y,casesContigues,resultat,dico)
+			finSi
+		finPour
+	finPour
+	supprimerTeteCase (caseContigues)
+	changementDEtat(grille,i,j)
+Fin

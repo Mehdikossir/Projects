@@ -1,0 +1,66 @@
+Fonction creerDictionnaire (fic : FichierTexte) : Dictionnaire
+
+Déclaration : dico : Dictionnaire;
+			  temp : Chaine de caractère;
+
+Début
+	dico <- Dictionnaire ();
+	Tant que non finDeFichier (fic) Faire
+		lire (temp,fic);
+		Si estUnMot (temp) et longueur(temp) >= 2 et longueur(temp) <= 16 Alors
+			insererMot (dico,chaineEnMot(temp));
+		Fin si
+	Fin tant que
+	Retourner dico
+Fin
+
+
+Procedure serialiserDictionnaire (E/S : fic : FichierTexte, E : unDico : Dictionaire)
+
+Déclaration : temp : Dictionnaire;
+		    element: LettreEtBooleen;
+
+Début
+	Si non estVide (unDico) Alors
+		element <- obtenirElement (unDico);
+		ecrire (fic,obtenirLettre(element),obtenirFinMot(element));
+		Si estVide(obtenirFilsGauche (unDico));
+			ecrire (fic,'%(');
+		Fin si
+		temp <- obtenirFilsGauche (unDico);
+		serialiserDictionnaire (fic,temp);
+		Si estVide(obtenirFilsDroit (unDico));
+			ecrire (fic,'%)');
+		Fin si
+		temp <- obtenirFilsDroit (unDico);
+		serialiserDictionnaire (fic,temp);
+	Fin si
+Fin
+
+
+Procedure chargerDictionnaire (E/S : unDico : Dictionnaire, E : fic : FichierTexte)
+
+Déclaration : info : Chaine de Carcatères; 
+	 element: LettreEtBooleen;
+	   temp : Dictionnaire;
+
+Début
+	Si non finDeFichier (fic) Alors
+		lire (info,temp);
+		Si info[1] <> '%' Alors
+			fixerLettre (element,info[1]);
+			fixerFinMot (element,info[2]);
+			fixerElement (unDico, element);
+		Fin si	
+		Si info <> '%(' Alors
+			temp <- Dictionnaire ();
+			chargerDictionnaire (temp,fic);
+			fixerFilsGauche (unDico,temp);
+		Fin si
+		Si info <>'%)' Alors
+			temp <- Dictionnaire ();
+			chargerDictionnaire (temp,fic);
+			fixerFilsDroit (unDico,temp);
+		Fin si
+	Fin si
+Fin 

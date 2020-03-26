@@ -1,0 +1,112 @@
+Type Mot = Chaine de Caratcère
+
+Fonction mot (lettre1,lettre2 : [a..z,A..Z,-]) : Mot
+Début
+    Retourner lettre1 + lettre2
+Fin
+
+Fonction sontEgaux (mot1,mot2 : Mot) : Booleen
+Début
+    Retourner mot1 = mot2
+Fin
+
+Fonction estUnMot (chaineDeCaractere : Chaine De Caractere) : Booleen
+Déclaration : 
+    i : Entier
+    correct : Booleen
+Début
+    correct ← VRAI
+    i ← 1
+    Tant que correct et i <= longueur(chaineDeCaractere) Faire
+        Si chaineDeCaractere[i] <> [a..z,A..Z,-] Alors
+            correct ← FAUX
+        Fin si
+        i ← i + 1
+    Fin tant que
+    Retourner correct
+Fin
+
+Fonction allongerMot (mot : Mot, lettre : [a..z,A..Z,-]) : Mot
+Début
+    Retourner mot + lettre
+Fin
+
+Fonction chaineEnMot (chaineDeCaractere : Chaine De Caractere) : Mot
+	précondition[estUnMot(chaineDeCaractere)]
+Début
+    Retourner chaineDeCaractere
+Fin
+
+Fonction longueurMot (mot : Mot) : Naturel Non Nul
+Déclaration :
+    cdc : Chaine de caractère
+Début
+    cdc ← mot
+    Retourner longueur (cdc)
+Fin
+
+Fonction iemeLettre (mot : Mot, i : Naturel) : [a..z,A..Z,-]
+	précondition[1<i<=longueurMot(mot)]
+Début
+    Retourner mot[i]
+Fin
+
+Fonction estEnOrdreAlphabetique (mot1,mot2 : Mot) : Booleen
+Déclaration :
+    posCharDiff, longueurMin : Entier
+Début
+    longueurMin ← Max(longueur(mot1),longueur(mot2))
+    posCharDiff ← 1
+    Tant que mot1 [posCharDiff] = mot2 [posCharDiff] et posCharDiff < longueurMin Faire
+        posCharDiff ← posCharDiff + 1
+    Fin tant que
+    Si posCharDiff = longueur(mot1) Alors // cas où les deux mots ont les memes lettres mais un plus court
+        Retourner VRAI
+    Fin si
+    Si posCharDiff = longueur(mot2) Alors // idem
+        Retourner FAUX
+    Fin si
+    Si mot1[posCharDiff] < mot2[posCharDiff] Alors // cas où 2 char diff
+        Retourner VRAI
+    Sinon
+        Retourner Faux
+    Fin si
+    Fin
+
+Structure resultat
+    unMot : Mot
+    unScore : Naturel Non Nul
+Fin
+
+Fonction chargerLeDictionnaire () : Dictionnaire
+Début
+    A FAIRE, DEPEND DE NOTRE CHOIX DE DICO
+Fin
+
+Procedure affichage (E: uneListe : ListeOrdonnee <resultat>)
+Déclaration :
+    temp : resultat
+Début
+    Si non estVide (uneListe) Alors
+        temp ← obtenirElement (uneListe)
+        Ecrire (temp.unMot,", ",temp.unScore," points")
+        affichage (obtenirListeSuivante(uneListe)
+    Fin si
+Fin
+
+Type Grille : Tableau [1..16] de Case
+
+Fonction initialisationGrille () : Grille
+Déclaration :
+    i : Entier
+    temp : Grille
+    entreeUtilisateur : Chaine de [a..z,A..Z,-, ,0..9]
+Début
+    Lire (entreeUtilisateur)
+    Pour i ← 1 à 16 Faire
+        temp[i].lettre ← entreeUtilisateur[1 + 4*(i-1)]
+        temp[i].nbPointsAssocies ← entreeUtilisateur[2 + 4*(i-1)]
+        temp[i].bonus ← entreeUtilisateur[3 + 4*(i-1)..4 + 4*(i-1)]
+    Fin pour
+    Retourner temp
+Fin

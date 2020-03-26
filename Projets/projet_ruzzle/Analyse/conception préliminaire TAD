@@ -1,0 +1,414 @@
+
+        Conception préliminaire du TAD Mot 
+
+Type Mot = Chaine de Caractères
+fonction mot                                    ( lettre1,lettre2 : [a..z,A..Z,-]) : Mot
+fonction sontEgaux                              ( mot1,mot2 : Mot) : Booleen
+fonction estUnMot                               ( chaineDeCaractere : Chaine De Caractere) : Booleen
+fonction allongerMot                            ( mot : Mot, lettre : [a..z,A..Z,-]) : Mot
+fonction chaineEnMot                            ( chaineDeCaractere : Chaine De Caractere) : Mot
+	précondition[estUnMot(chaineDeCaractere)]
+fonction longueurMot (mot : Mot) : Naturel Non Nul
+fonction iemeLettre                             (mot : Mot, i : Naturel) : [a..z,A..Z,-]
+	précondition[1<i<=longueurMot(mot)]
+fonction estEnOrdreAlphabetique                 (mot1,mot2 : Mot) : Booleen
+_____________________________________________________________________________________________________
+
+Fonction mot (lettre1,lettre2 : [a..z,A..Z,-]) : Mot
+Début
+    Retourner lettre1 + lettre2
+Fin
+
+Fonction sontEgaux (mot1,mot2 : Mot) : Booleen
+Début
+    Retourner mot1 = mot2
+Fin
+
+Fonction estUnMot (chaineDeCaractere : Chaine De Caractere) : Booleen
+Déclaration : 
+    i : Entier
+    correct : Booleen
+Début
+    correct ← VRAI
+    i ← 1
+    Tant que correct et i <= longueur(chaineDeCaractere) Faire
+        Si chaineDeCaractere[i] <> [a..z,A..Z,-] Alors
+            correct ← FAUX
+        Fin si
+        i ← i + 1
+    Fin tant que
+    Retourner correct
+Fin
+
+Fonction allongerMot (mot : Mot, lettre : [a..z,A..Z,-]) : Mot
+Début
+    Retourner mot + lettre
+Fin
+
+Fonction chaineEnMot (chaineDeCaractere : Chaine De Caractere) : Mot
+	précondition[estUnMot(chaineDeCaractere)]
+Début
+    Retourner chaineDeCaractere
+Fin
+
+Fonction longueurMot (mot : Mot) : Naturel Non Nul
+Déclaration :
+    cdc : Chaine de caractère
+Début
+    cdc ← mot
+    Retourner longueur (cdc)
+Fin
+
+Fonction iemeLettre (mot : Mot, i : Naturel) : [a..z,A..Z,-]
+	précondition[1<i<=longueurMot(mot)]
+Début
+    Retourner mot[i]
+Fin
+
+Fonction estEnOrdreAlphabetique (mot1,mot2 : Mot) : Booleen
+Déclaration :
+    posCharDiff, longueurMin : Entier
+Début
+    longueurMin ← Max(longueur(mot1),longueur(mot2))
+    posCharDiff ← 1
+    Tant que mot1 [posCharDiff] = mot2 [posCharDiff] et posCharDiff < longueurMin Faire
+        posCharDiff ← posCharDiff + 1
+    Fin tant que
+    Si posCharDiff = longueur(mot1) Alors // cas où les deux mots ont les memes lettres mais un plus court
+        Retourner VRAI
+    Fin si
+    Si posCharDiff = longueur(mot2) Alors // idem
+        Retourner FAUX
+    Fin si
+    Si mot1[posCharDiff] < mot2[posCharDiff] Alors // cas où 2 char diff
+        Retourner VRAI
+    Sinon
+        Retourner Faux
+    Fin si
+    Fin
+_____________________________________________________________________________________________________
+_____________________________________________________________________________________________________
+
+        Conception préliminaire du TAD Dictionnaire: 
+
+Type  LettreEtBooleen=Structure
+    lettre : Caractere
+    EstFinMot : booleen 
+finStructure
+Structure Dictionnaire =ArbreBinaire
+ Type ArbreBinaire = ^Noeud
+ Type Noeud = Structure
+    IElement : LettreEtBooleen
+    filsGauche:ArbreBinaire
+    filsDroit :ArbreBinaire
+Fin structure
+Fonction obtenirlettre(Element :LettreEtBooleen) : Caractere
+Fonction obtenirEstFinMot(Element :LettreEtBooleen) : Booleen
+Procédure fixerlettre(E/S Element :LettreEtBooleen, E lettre : Caractere)
+Procédure fixerEstFinMot(E/S Element :LettreEtBooleen, E EstFinMot : Boolee
+Fonction Dictionnaire ():Dictionnaire
+Fonction estVide (dictionnaire:Dictionnaire) : Booléen
+Procédure insérerMot( E/S  dictionnaire:Dictionnaire ,E m:Mot)
+    pécondition [ non estPresent (dictionnaire, m)]
+fonction estPresent (dictionnaire:Dictionnaire,mot:Mot):Booléen
+fonction estUnPrefixe (unDico : Dictionnaire, unMot : Mot) : Booleen
+_____________________________________________________________________________________________________
+
+Fonction obtenirlettre(Element :LettreEtBooleen) : Caractere
+Debut
+   retourner Element.lettre
+Fin
+Fonction obtenirEstFinMot(Element :LettreEtBooleen) : Booleen
+Debut
+   retourner Element.EstFinMot
+Fin
+Procédure fixerlettre(E/S Element :LettreEtBooleen, E lettre : Caractere)
+Debut
+   Element.lettre =lettre
+Fin
+Procédure fixerEstFinMot(E/S Element :LettreEtBooleen, E EstFinMot : Booleen)
+Debut
+   Element.EstFinMot =EstFinMot
+Fin
+Fonction Dictionnaire ():Dictionnaire
+Debut
+     retouner NIL
+Fin
+Fonction estVide (dictionnaire:Dictionnaire) : Booléen
+Debut
+    retourner dictionnaire = NIL
+Fin
+Procédure insérerMot( E/S  unDico:Dictionnaire ,E m:Mot)
+       pécondition [ non estPresent (dictionnaire, m)]
+Declaration  i:Naturel Non null ,temp :Dictionnaire , temp2 :Dictionnaire
+Debut
+   i=1;
+   tant que ArbreBinaire.NonEstVide (unDico) faire
+        si Mot.iemelettre(i,mot)= LettreEtBooleen.obtenirlettre(ArbreBinaire.obtenirElement(unDico))
+           i=i+1
+           temp=ArbreBinaire.obtenirFilsGauche(unDico)
+           inserer(temp,mot)
+        sinon
+            unDico <-ArbreBinaire.obtenirFilsDroit(unDico)
+        Fin si
+    Fin tant que
+    
+         si ArbreBinaire.EstVide(unDico) alors 
+             tant que i<=longeur(mot)-1 faire 
+                  LettreEtBooleen.fixerlettre(unDico^.IElement) =Mot.iemelettre(i,mot)
+                  LettreEtBooleen.fixerEstFinMot(unDico^.IElement)=Faux
+                  unDicco=ArbreBinaire.obtenirFilsGauche(unDico)
+                  i<-i+1
+              fin tant que 
+              LettreEtBooleen.fixerlettre(unDico^.IElement) =Mot.iemelettre(Mot.longeur(mot),mot)
+              LettreEtBooleen.fixerEstFinMot(unDico^.IElement)=Vrai
+         Fin si
+Fin
+Fonction estPresent (unDico:Dictionnaire,mot:Mot):Booléen
+    Declaration : i :Naturel Non Null
+Debut
+  i=1;
+      Tant que ArbereBinaire.nonEstVide(unDico)  faire 
+                 Si Mot.iemelettre(i,mot)=LettreEtBooleen.obtenirlettre(ArbreBinaire.obtenirElement(unDico))  alors
+                       si i=longeur(mot) et LettreEtBooleen.obtenirEstFinMot(ArbreBinaire.obtenirElement(unDico)) alors
+                               retourner Vrai
+                        Fin si
+                     unDicco <- ArbreBinaire.obtenirfilsgauche(unDico)
+                     i<-i+1
+                  sinon
+                   unDico<-ArbreBinaire.obtenirfilsdroit(unDico)
+                 Fin si
+Si ArbreBinaire.EstVide(unDico) alors 
+      Retourner Faux
+Fin si
+Fin
+Fonction estUnPrefixe (unDico : Dictionnaire, unMot : Mot) : Booleen
+Declaration ; i:Naturel Non Nul
+Debut
+tant que Dictionnaire.nonestVide(unDico) et i<=Mot.longeur(mot) faire 
+    Si Mot.iemeLettre(mot,i)=LettreEtBooleen.obtenirlettre(ArbreBinaire.obtenirElement(unDico)) alors
+             unDico <- ArbreBinaire.obtenirFilsGauche(unDico)
+             i<-i+1
+     Sinon 
+              unDico <-ArbreBinaire.obtenirFilsDroit(unDico) alors
+    Fin si
+  Si i>Mot.longeur(Mot) alors
+        retourner Vrai
+  Sinon
+         retourner Faux
+  Fin Si
+Fin tant que 
+Fin
+_____________________________________________________________________________________________________
+_____________________________________________________________________________________________________
+
+        Conception préliminaire du TAD Case :
+
+Type enum bonus =[ ,LD,LT,MD,MT]
+Type Case = sturcture
+        lettre       : [a..z]
+        nbPoints      : NaturelNonNul
+        bonus        : Bonus
+        dejaUitilise : Booleen
+    FinStructure 
+
+fonction Case (lettre :[a..z] ,nbPoints:Naturel non nul,bonus:Bonus, dejaUtilise : Booleen):Case
+fonction obtenirNbPoints (case:Case) : Naturel non nul
+fonction obtenirLettre (case:Case) : [a..z]
+fonction obtenirBonus (case:Case) : Bonus
+fonction estDejaUtilise (case:Case):Booleen
+fonction bonusLettreEnNaturel (case:Case) : Naturel
+fonction bonusMotEnNaturel (case:Case) : Naturel 
+_____________________________________________________________________________________________________
+
+fonction Case (lettre :[a..z] ,nbPoints:Naturel non nul,bonus:Bonus, dejaUtilise : Booleen,):Case
+        Declaration : case : case
+Debut
+    case.numeroCase <- numeroCase;
+    case.lettre <- lettre;
+    case.nbPoints <- nbPoints; 
+    case.bonus <- bonus;
+    case.dejaUtilise <- dejaUtilise;
+    retourner(case);
+Fin
+fonction obtenirNbPoints (case:Case) : Naturel non nul
+Debut
+    retourner (case.nbPoints)
+Fin
+fonction obtenirLettre (case:Case) : [a..z]
+Debut
+    retourner (case.lettre)
+Fin
+fonction obtenirBonus (case:Case) : Bonus
+Debut
+    retourner (case.bonus)
+Fin
+fonction estDéjaUtilisé (case:Case):Booleen
+Debut
+    retourner (case.dejaUtilise)
+Fin
+fonction bonusLettreEnNaturel (case:Case) : Naturel // revoie 1 2 ou 3  en fonction du bonus appliqué à la lettre
+Debut
+    cas où case.bonus 
+        '  ','MD','MT': retourner 1
+        'LD': retourner 2
+        'LT': retourner 3
+Fin
+Fonction bonusMotEnNaturel (case:Case) : Naturel // renvoie 1 2 ou 3  en fonction du bonus appliqué au mot
+Debut
+    cas où case.bonus 
+        '  ','LT','LD': retourner 1
+        'MD': retourner 2
+        'MT': retourner 3
+Fin
+_____________________________________________________________________________________________________
+_____________________________________________________________________________________________________
+
+        Conception préliminaire du TAD CasesContigues :
+
+Type CasesContigues : ^Noeud
+Type Noeud = structure
+    case : Case
+    casesSuivantes : CasesContigues
+fin structure
+Fonction CasesContigues():CasesContigues
+Fonction estVide (casescontigues : CasesContigues):booleen
+Fonction estPresent (casescontigues : CasesContigues,case : Case) : Booleen
+Procedure ajouterCase (E/S : casescontigues:CasesContigues,E : case : Case)
+Fonction obtenirCase (casescontigues:CasesContigues) :Case
+Procédure fixerCasesContiguesSuivante (E/S casescontigues:CasesContigues, E casescontigues' : CasesContigues)
+Fonction longueur (casescontigues:CasesContigues) : Naturel
+Fonction obtenirCasesSuivantes (casecontigues:CasesContigues):CasesContigues
+Fonction scoreCasesContiguesSansBonusMot(casescontigues:CasesContigues) : Naturel
+Fonction scoreCasesContigues (casescontigues : CasesContigues) : Naturel Non Nul
+Fonction casesContiguesEnMot(casescontigues:CasesContigues) : Mot
+Procédure suppimerTeteCase (E/S: casescontigues : casesContigues)
+Procédure supprimer (E/S: casescontigues : casesContigues)
+_____________________________________________________________________________________________________
+
+fonction CasesContigues():CasesContigues
+    Debut
+        retourner NIL
+    Fin
+fonction estVide (casescontigues : CasesContigues):booleen
+    Debut
+        retourner casescontigues = NIL 
+    Fin
+fonction estPresent (casescontigues : CasesContigues,case : Case) : Booleen
+    Debut
+        si estVide (casescontigues) alors
+            retourner Faux
+        Sinon si obtenirCase (casescontigues) = case
+                retourner Vrai
+              sinon
+                retourner estPresent ( obtenirCasesSuivantes (casecontigues), case)
+              finSi
+        finSi
+    Fin
+Procedure ajouterCase (E/S : casescontigues:CasesContigues,E : case : Case)
+    Précondition[non dejaUtilisé(case)]
+    Déclaration : temp : CasesContigues
+    Debut
+        temp <- casescontigues
+        allouer(casescontigues)
+        casescontigues^.case <- case
+        fixerCasesContiguesSuivante(casescontigues,temp) 
+    Fin
+Fonction obtenirCase (casescontigues:CasesContigues) :Case
+    Précondition[non estVide(casescontigues)]
+    Debut
+        retourner casescontigues^.case
+    Fin
+Procédure fixerCasesContiguesSuivante (E/S casescontigues:CasesContigues, E casescontigues' : CasesContigues)
+    Précondition [non estVide(casescontigues)]
+    Début 
+        casescontigues^.casesSuivantes <- casescontigues'
+    Fin
+Fonction longueur (casescontigues:CasesContigues) : Naturel
+    Début
+        si estVide (casesciontigues)
+            retourner 0
+        sinon
+            retourner 1 + longueur (obtenirCasesSuivantes(casescontigues))
+        finSi
+    Fin
+Fonction obtenirCasesSuivantes (casecontigues:CasesContigues):CasesContigues
+     Précondition [non estVide (caseContigues)]
+     Début
+        retourner l^.casesSuivantes
+     Fin
+Fonction scoreCasesContiguesSansBonusMot(casescontigues:CasesContigues) : Naturel
+    Début
+        Si estvide (casescontigues) Alors
+            retourner 0
+        Sinon 
+            retourner (obtenirScore(obtenirCase(casescontigues)) * bonusLettreEnNaturel (obtenirCase(casescontigues))) + scoreCasesContiguesSansBonusMot(obtenirCasesSuivantes(casecontigues))
+        finSi
+    Fin
+Fonction scoreCasesContigues (casescontigues : CasesContigues) : Naturel Non Nul
+    Déclaration: multiplicateur : Naturel Non Nul
+    Début
+        multiplicateur <- 1
+        Tant Que estVide(casescontigues) Alors
+            multiplicateur <- bonusMotEnNaturel(obtenirCase) * multiplicateur
+            casescontigues <- obtenirCasesSuivante( casescontigues)
+        finTantQue
+        retourner (multiplicateur * scoreCasesContiguesSansBonus(casescontigues))
+    Fin
+Fonction casesContiguesEnMot(casescontigues:CasesContigues) : Mot
+    Début
+        Si estVide (obtenirCasesSuivantes(obtenirCasesSuivantes(casescontigues)) Alors
+            retourner mot((obtenirCase(casecontigues).lettre),obtenirCase(obtenirCasesSuivantes(casescontigues)).lettre)
+        Sinon
+            retourner allongerMot(obtenirCase(casecontigues).lettre,motEnCasesContigues(obtenirCasesSuivantes(casescontigues)))
+        FinSi
+    Fin
+Procédure suppimerTeteCase (E/S: casescontigues : casesContigues)
+    Préconditions [non estVide(casescontigues)]
+    Déclaration : temp : casesContigues
+    Début
+        temp <- casescontigues
+        casescontigues <- obtenirCasesSuivantes(casecontigues)
+        liberer(temp)
+    Fin
+Procédure supprimer (E/S: casescontigues : casesContigues)
+    Début
+        Tant Que non estVide(casescontigues) faire
+            supprimerTeteCase (casescontigues)
+        FinTantQue
+    Fin
+_____________________________________________________________________________________________________
+_____________________________________________________________________________________________________
+
+        Concepton préliminaire du TAD Grille:
+
+Type Grille = tableaux[1..4][1..4] de case
+Type Coordonnee = structure
+        x : entier
+        y : entier
+    FinStructure
+fonction Grille ():Grille
+fonction obtenirCase(grille:Grille, coordonnee):Case
+Procedure changementDEtat (E/S: grille : Grille, E: coordonnee:Coordonnee)
+_____________________________________________________________________________________________________
+  
+Fonction Grille ():Grille
+   Declaration: grille : Grille
+                i,j      : entier
+Debut
+    pour i=1 à 4 faire
+        pour j=1 à 4 faire
+            grille[i][j] <- case(a,1,'  ',faux);
+        finPour
+    finPour
+    retourner(grille);
+Fin
+Fonction obtenirCase(grille:Grille, coordonnee):Case
+Debut
+    retourner(grille[coordonnee.x][coordonee.y]);
+Fin
+Procedure changementDEtat (E/S: grille : Grille, E: coordonnee:Coordonnee)
+Debut
+    grille[coordonnee.x].dejaUtilise <- non(grille[coordonnee.y].dejaUtilise);
+Fin
+

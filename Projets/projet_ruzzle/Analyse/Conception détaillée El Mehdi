@@ -1,0 +1,126 @@
+Type  LettreEtBooleen=Structure
+    lettre : Caractere
+    EstFinMot : booleen 
+finStructure
+
+Structure Dictionnaire =ArbreBinaire
+ Type ArbreBinaire = ^Noeud
+ Type Noeud = Structure
+    IElement : LettreEtBooleen
+    filsGauche:ArbreBinaire
+    filsDroit :ArbreBinaire
+Fin structure
+
+-fonction obtenirlettre(Element :LettreEtBooleen) : Caractere
+ Debut
+   retourner Element.lettre
+  Fin
+ -fonction obtenirEstFinMot(Element :LettreEtBooleen) : Booleen
+ Debut
+   retourner Element.EstFinMot
+  Fin
+ -procédure fixerlettre(E/S Element :LettreEtBooleen, E lettre : Caractere)
+ Debut
+   Element.lettre =lettre
+  Fin
+  
+ -procédure fixerEstFinMot(E/S Element :LettreEtBooleen, E EstFinMot : Booleen)
+ Debut
+   Element.EstFinMot =EstFinMot
+  Fin
+  
+-fonction Dictionnaire ():Dictionnaire
+
+ Debut
+     retouner NIL
+ FIN
+
+
+-Fonction estVide (dictionnaire:Dictionnaire) : Booléen
+Debut
+    retourner dictionnaire = NIL
+Fin
+
+
+
+-Procédure insérerMot( E/S  unDico:Dictionnaire ,E m:Mot)
+       pécondition [ non estPresent (dictionnaire, m)]
+   Declaration  i:Naturel Non null ,temp :Dictionnaire , temp2 :Dictionnaire
+
+Debut
+   i=1;
+   tant que ArbreBinaire.NonEstVide (unDico) faire
+        si Mot.iemelettre(i,mot)= LettreEtBooleen.obtenirlettre(ArbreBinaire.obtenirElement(unDico))
+           i=i+1
+           temp=ArbreBinaire.obtenirFilsGauche(unDico)
+           inserer(temp,mot)
+        sinon
+            unDico <-ArbreBinaire.obtenirFilsDroit(unDico)
+        Fin si
+    Fin tant que
+    
+         si ArbreBinaire.EstVide(unDico) alors 
+             tant que i<=longeur(mot)-1 faire 
+                  LettreEtBooleen.fixerlettre(unDico^.IElement) =Mot.iemelettre(i,mot)
+                  LettreEtBooleen.fixerEstFinMot(unDico^.IElement)=Faux
+                  unDicco=ArbreBinaire.obtenirFilsGauche(unDico)
+                  i<-i+1
+              fin tant que 
+              LettreEtBooleen.fixerlettre(unDico^.IElement) =Mot.iemelettre(Mot.longeur(mot),mot)
+              LettreEtBooleen.fixerEstFinMot(unDico^.IElement)=Vrai
+         Fin si
+Fin
+
+
+
+-Fonction estPresent (unDico:Dictionnaire,mot:Mot):Booléen
+    Declaration : i :Naturel Non Null
+Debut
+  i=1;
+      Tant que ArbereBinaire.nonEstVide(unDico)  faire 
+                 Si Mot.iemelettre(i,mot)=LettreEtBooleen.obtenirlettre(ArbreBinaire.obtenirElement(unDico))  alors
+                       si i=longeur(mot) et LettreEtBooleen.obtenirEstFinMot(ArbreBinaire.obtenirElement(unDico)) alors
+                               retourner Vrai
+                        Fin si
+                     unDicco <- ArbreBinaire.obtenirfilsgauche(unDico)
+                     i<-i+1
+                  sinon
+                   unDico<-ArbreBinaire.obtenirfilsdroit(unDico)
+                 Fin si
+Si ArbreBinaire.EstVide(unDico) alors 
+      Retourner Faux
+Fin si
+FIN
+
+
+-Fonction estUnPrefixe (unDico : Dictionnaire, unMot : Mot) : Booleen
+
+Declaration ; i:Naturel Non Nul
+
+Debut
+
+tant que Dictionnaire.nonestVide(unDico) et i<=Mot.longeur(mot) faire 
+    Si Mot.iemeLettre(mot,i)=LettreEtBooleen.obtenirlettre(ArbreBinaire.obtenirElement(unDico)) alors
+             unDico <- ArbreBinaire.obtenirFilsGauche(unDico)
+             i<-i+1
+     Sinon 
+              unDico <-ArbreBinaire.obtenirFilsDroit(unDico) alors
+    Fin si
+  Si i>Mot.longeur(Mot) alors
+        retourner Vrai
+  Sinon
+         retourner Faux
+  Fin Si
+Fin tant que 
+
+FIN
+
+
+
+Structure resultat
+    unMot : Mot
+    unScore : Naturel Non Nul
+Fin
+
+
+

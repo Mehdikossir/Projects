@@ -1,0 +1,33 @@
+Structure resultat
+    unMot : Mot
+    unScore : Naturel Non Nul
+Fin
+
+Fonction chargerLeDictionnaire () : Dictionnaire
+
+Procedure affichage (E: uneListe : ListeOrdonnee)
+
+Fonction initialisationGrille () : Grille
+
+Fonction chaineDeCaractèreEnGrille (uneCdc : Chaine de caractère) : Grille
+
+Fonction resoudreRuzzle (uneGrille : Grille, dico : Arbre) : ListeOrdonnee
+
+Procedure selectionDesCases (E/S: cases : CasesContigues, E: uneGrille : Grille)
+
+Fonction choixCaseValide (cases : CasesContigues, uneGrille : Grille) : Case
+
+Fonction caseDejaSelectionne (uneCase : Case) : Booleen
+
+Procedure changementDEtat (E/S: uneGrille : Grille, E: uneCase : Case)
+
+Procedure ajoutCase (E/S: cases : CasesContigues, E: uneCase : Case)
+
+Fonction casesEnMot (cases : CasesContigues) : Mot
+
+Fonction estPrefixe (unMot : Mot, leDico : Dictionnaire) : Booleen
+
+Fonction estUnMotValide (unMot : Mot, leDico : Dictionnaire) : Booleen
+
+Procedure ajouterMotListe (E/S: uneListe : ListeOrdonnee, E: cases : CasesContigues)
+

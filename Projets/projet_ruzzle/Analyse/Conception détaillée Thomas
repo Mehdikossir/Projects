@@ -1,0 +1,184 @@
+// Definition du type CasesContigues
+
+Type CasesContigues : ^Noeud
+Type Noeud = structure
+    case : Case
+    casesSuivantes : CasesContigues
+fin structure
+
+// Fonctions et procédures du TAD CasesContigues
+
+fonction CasesContigues():CasesContigues
+fonction estVide (casescontigues : CasesContigues):booleen
+fonction estPresent (casescontigues : CasesContigues,case : Case) : Booleen
+Procedure ajouterCase (E/S : casescontigues:CasesContigues,E : case : Case)
+Fonction obtenirCase (casescontigues:CasesContigues) :Case
+Procédure fixerCasesContiguesSuivante (E/S casescontigues:CasesContigues, E casescontiguesAFixer : CasesContigues)
+Fonction longueur (casescontigues:CasesContigues) : Naturel
+Fonction obtenirCasesSuivantes (casecontigues:CasesContigues):CasesContigues
+Fonction scoreCasesContiguesSansBonusMot(casescontigues:CasesContigues) : Naturel
+Fonction scoreCasesContigues (casescontigues : CasesContigues) : Naturel Non Nul
+Fonction casesContiguesEnMot(casescontigues:CasesContigues) : Mot
+Procédure suppimerTeteCase (E/S: casescontigues : casesContigues)
+procédure supprimer (E/S: casescontigues : casesContigues)
+
+// Pseudocode
+
+fonction CasesContigues():CasesContigues
+    Debut
+        retourner NIL
+    Fin
+
+
+fonction estVide (casescontigues : CasesContigues):booleen
+    Debut
+        retourner casescontigues = NIL 
+    Fin
+
+
+fonction estPresent (casescontigues : CasesContigues,case : Case) : Booleen
+    Debut
+        si estVide (casescontigues) alors
+            retourner Faux
+        Sinon si obtenirCase (casescontigues) = case
+                retourner Vrai
+              sinon
+                retourner estPresent ( obtenirCasesSuivantes (casecontigues), case)
+              finSi
+        finSi
+    Fin
+
+
+Procedure ajouterCase (E/S : casescontigues:CasesContigues,E : case : Case)
+    Précondition[non dejaUtilisé(case)]
+    Déclaration : temp : CasesContigues
+    Debut
+        temp <- casescontigues
+        allouer(casescontigues)
+        casescontigues^.case <- case
+        fixerCasesContiguesSuivante(casescontigues,temp) 
+    Fin
+
+
+Fonction obtenirCase (casescontigues:CasesContigues) :Case
+    Précondition[non estVide(casescontigues)]
+    Debut
+        retourner casescontigues^.case
+    Fin
+
+    
+Procédure fixerCasesContiguesSuivante (E/S casescontigues:CasesContigues, E casescontiguesAFixer : CasesContigues)
+    Précondition [non estVide(casescontigues)]
+    Début 
+        casescontigues^.casesSuivantes <- casescontigues'
+    Fin
+    
+    
+Fonction longueur (casescontigues:CasesContigues) : Naturel
+    Début
+        si estVide (casesciontigues)
+            retourner 0
+        sinon
+            retourner 1 + longueur (obtenirCasesSuivantes(casescontigues))
+        finSi
+    Fin
+
+    
+Fonction obtenirCasesSuivantes (casecontigues:CasesContigues):CasesContigues
+     Précondition [non estVide (caseContigues)]
+     Début
+        retourner l^.casesSuivantes
+     Fin
+
+
+Fonction scoreCasesContiguesSansBonusMot(casescontigues:CasesContigues) : Naturel
+    Début
+        Si estvide (casescontigues) Alors
+            retourner 0
+        Sinon 
+            retourner (obtenirScore(obtenirCase(casescontigues)) * bonusLettreEnNaturel (obtenirCase(casescontigues))) + scoreCasesContiguesSansBonusMot(obtenirCasesSuivantes(casecontigues))
+        finSi
+    Fin
+
+    
+Fonction scoreCasesContigues (casescontigues : CasesContigues) : Naturel Non Nul
+    Déclaration: multiplicateur : Naturel Non Nul
+    Début
+        multiplicateur <- 1
+        Tant Que estVide(casescontigues) Alors
+            multiplicateur <- bonusMotEnNaturel(obtenirCase) * multiplicateur
+            casescontigues <- obtenirCasesSuivante( casescontigues)
+        finTantQue
+        retourner (multiplicateur * scoreCasesContiguesSansBonus(casescontigues))
+    Fin
+    
+Fonction casesContiguesEnMot(casescontigues:CasesContigues) : Mot
+    Début
+        Si estVide (obtenirCasesSuivantes(obtenirCasesSuivantes(casescontigues)) Alors
+            retourner mot((obtenirCase(casecontigues).lettre),obtenirCase(obtenirCasesSuivantes(casescontigues)).lettre)
+        Sinon
+            retourner allongerMot(obtenirCase(casecontigues).lettre,motEnCasesContigues(obtenirCasesSuivantes(casescontigues)))
+        FinSi
+    Fin
+    
+Procédure suppimerTeteCase (E/S: casescontigues : casesContigues)
+    Préconditions [non estVide(casescontigues)]
+    Déclaration : temp : casesContigues
+    Début
+        temp <- casescontigues
+        casescontigues <- obtenirCasesSuivantes(casecontigues)
+        liberer(temp)
+    Fin
+    
+procédure supprimer (E/S: casescontigues : casesContigues)
+    Début
+        Tant Que non estVide(casescontigues) faire
+            supprimerTeteCase (casescontigues)
+        FinTantQue
+    Fin
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Fonction ruzzleSolveur (grille : Grille ; dico : dictionnaire):listeOrdonnée
+Procedure rechercherDeMot(E/S : grille : Grille; i,j: Naturel Non Nul; casesContigues : CasesContigues, resultat : ListeOrdonnee, dico : Dictionnaire)
+
+Fonction ruzzleSolveur (grille : Grille ; dico : dictionnaire):listeOrdonnée
+
+Déclaration: casesContigues : CasesContigues
+	                i,j : Naturel Non Nul
+		   resultat : ListeOrdonnee
+
+Début
+	// attention l'ensemble des cases de la grille doivent etre initialisé comme pas prise
+	casesContigues <-casesContigues()
+	resultat <- listeOrdonnee ()
+	Pour i allant de 1 a 4
+		Pour j allant de 1 à 4
+			rechercheDeMot(grille,i,j,casesContigues,dico,resultat)
+		finPour
+	finPour
+	retourner listeOrdonnée
+Fin
+
+Procedure rechercherDeMot(E/S : grille : Grille; i,j: Naturel Non Nul; casesContigues : CasesContigues, resultat : ListeOrdonnee, dico : Dictionnaire)
+
+Déclération : x,y : 
+
+Début
+	changementDEtat(grille,i,j)
+    ajouterCase(caseContigues,obtenirCase(grille,i,j))
+	Si estPresent(casesContiguesEnMot(casesContigues),dico)
+		ajouterMotDansLaListe(casesContigues,resultat)
+	finSi
+	// aller dans toutes les differentes cases adjacentes	
+	Pour x allant de (i <= 0 ? 0 : -1) à (i >= 3 ? 0 : 1)
+		Pour y allant de (j <= 0 ? 0 : -1) à (j >= 3 ? 0 : 1)
+			Si non(estDejaUtilisé(obtenirCase(grille,i+x,j+y))) et estPrefixe (casesContigues,dico) 
+				rechercherDeMot(grille,i+x,j+y,casesContigues,resultat,dico)
+			finSi
+		finPour
+	finPour
+	supprimerTeteCase (caseContigues)
+	changementDEtat(grille,i,j)
+Fin
+	

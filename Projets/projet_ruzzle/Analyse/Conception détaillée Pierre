@@ -1,0 +1,113 @@
+Type enum Bonus =[  ,LD,LT,MD,MT] // '  ' deux espaces pour pas de bonus voir avec prof
+
+Type Grille = tableaux[1..4][1..4] de case
+
+    Type Case = sturcture
+        lettre       : [a..z]
+        nbPoints      : NaturelNonNul
+        bonus        : Bonus
+        dejaUitilise : Booleen
+   FinStructure 
+   
+   Type Coordonnee = structure
+        x : entier
+        y : entier
+    FinStructure
+
+
+
+fonction C_Case (lettre :[a..z] ,nbPoints:Naturel non nul,bonus:Bonus, dejaUtilise : Booleen):Case
+fonction C_obtenirNbPoints (case:Case) : Naturel non nul
+fonction C_obtenirLettre (case:Case) : [a..z]
+fonction C_obtenirBonus (case:Case) : Bonus
+fonction C_estDejaUtilise (case:Case):Booleen
+fonction C_bonusLettreEnNaturel (case:Case) : Naturel // revoie 1 2 ou 3  en fonction du bonus appliqué à la lettre
+fonction C_bonusMotEnNaturel (case:Case) : Naturel // renvoie 1 2 ou 3  en fonction du bonus appliqué au mot
+
+fonction G_Grille ():Grille
+fonction G_obtenirCase(grille:Grille, coordonnee:Coordonnee):Case
+Procedure G_changementDEtat (E/S: uneGrille : Grille, E: coordonnee:Coordonnee)
+
+_______________________________________________________________________________________________________________________________________________________________
+
+Pseudo Code
+_______________________________________________________________________________________________________________________________________________________________
+
+fonction C_Case (lettre :[a..z] ,nbPoints:Naturel non nul,bonus:Bonus, dejaUtilise : Booleen,):Case
+        Declaration : case : case
+Debut
+    case.numeroCase <- numeroCase;
+    case.lettre <- lettre;
+    case.nbPoints <- nbPoints; 
+    case.bonus <- bonus;
+    case.dejaUtilise <- dejaUtilise;
+    retourner(case);
+Fin
+
+fonction C_obtenirNbPoints (case:Case) : Naturel non nul
+
+Debut
+    retourner (case.nbPoints)
+Fin
+
+fonction C_obtenirLettre (case:Case) : [a..z]
+
+Debut
+    retourner (case.lettre)
+Fin
+
+fonction C_obtenirBonus (case:Case) : Bonus
+
+Debut
+    retourner (case.bonus)
+Fin
+
+fonction C_estDéjaUtilisé (case:Case):Booleen
+
+Debut
+    retourner (case.dejaUtilise)
+Fin
+
+fonction C_bonusLettreEnNaturel (case:Case) : Naturel // revoie 1 2 ou 3  en fonction du bonus appliqué à la lettre
+
+Debut
+    cas où case.bonus 
+        '  ','MD','MT': retourner 1
+        'LD': retourner 2
+        'LT': retourner 3
+Fin
+
+fonction C_bonusMotEnNaturel (case:Case) : Naturel // renvoie 1 2 ou 3  en fonction du bonus appliqué au mot
+
+Debut
+    cas où case.bonus 
+        '  ','LT','LD': retourner 1
+        'MD': retourner 2
+        'MT': retourner 3
+Fin
+
+
+
+fonction G_Grille ():Grille
+   Declaration: grille : Grille
+                i,j      : entier
+Debut
+    pour i=1 à 4 faire
+        pour j=1 à 4 faire
+            grille[i][j] <- case(a,1,'  ',faux);
+        finPour
+    finPour
+    retourner(grille);
+Fin
+
+fonction G_obtenirCase(grille:Grille, coordonnee):Case
+    
+Debut
+    retourner(grille[coordonnee.x][coordonee.y]);
+Fin
+
+Procedure G_changementDEtat (E/S: grille : Grille, E: coordonnee:Coordonnee)
+
+Debut
+    grille[coordonnee.x].dejaUtilise <- non(grille[coordonnee.y].dejaUtilise);
+Fin
