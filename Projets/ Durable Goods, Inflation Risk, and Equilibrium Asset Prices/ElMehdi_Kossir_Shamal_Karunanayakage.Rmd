@@ -1,0 +1,709 @@
+---
+title: "Economics of financial markets"
+subtitle : "TAKE HOME EXAM"
+author: "Group 27. Kossir El Mehdi, Shamal Karunanayakage"
+date: "17/06/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("readxl")
+library("readxl")
+
+#install.packages("e1071")
+library("e1071")
+
+#install.packages("corrplot")
+library("corrplot")
+
+#install.packages("ggpubr")
+library("ggpubr")
+
+#install.packages("fPortfolio")
+library("fPortfolio")
+
+#install.packages("PerformanceAnalytics")
+library("PerformanceAnalytics")
+
+#install.packages("dplyr")
+library("dplyr")
+
+#install.packages("tidyr")
+library("tidyr")
+```
+
+First of all, we are importing the .xlsx file with the function read_excel from the library readxl, each worksheet is imported in a different variable.
+```{r, message=FALSE}
+stock_daily <- read_excel("data for exam 2021.xlsx", sheet="stocks daily")
+stock_monthly <- read_excel("data for exam 2021.xlsx", sheet="stocks monthly")
+
+funds_daily <- read_excel("data for exam 2021.xlsx", sheet="funds daily")
+funds_monthly <- read_excel("data for exam 2021.xlsx", sheet="funds monthly")
+
+ftse_ita_daily <- read_excel("data for exam 2021.xlsx", sheet="ftse italia all share daily")
+ftse_ita_monthly <- read_excel("data for exam 2021.xlsx", sheet="ftse italia all share monthly")
+```
+
+I noticed that when we are importing the file, the data has a problem with the column of dates. For example, instead of having "01-01-2015" there is "42005". to solve this problem, I am going to drop that column and then create a new sequence of dates from the 01-01-2015 to 14-06-2015, without the dates of the weekends.
+```{r}
+#dropping the column of dates and the first two lines giving the code and the currency used by each companies
+stock_daily1 <- stock_daily[-c(1, 2), ]
+stock_daily1 <- stock_daily1[ ,-c(1)]
+
+#New column date
+date_daily <- seq(as.Date('2015-01-01'),as.Date('2021-06-14'),by = 1)
+date_daily <- date_daily[!weekdays(date_daily) %in% c('Samedi','Dimanche')]
+#Here is the english version of the previous line, because on my computer R was installed in French so it doesn't recognize Saturday and Sunday
+date_daily <- date_daily[!weekdays(date_daily) %in% c('Saturday','Sunday')]
+```
+
+Another problem is the fact that the values of this dataframe are strings so there will be errors when we will have to apply some computations on those numbers. That is why we have to create a new data where there will be only numbers (double).
+
+```{r, message=FALSE}
+nc_daily <- ncol(stock_daily1) #number of variables (columns)
+nr_daily <- nrow(stock_daily1) #number of observations (rows)
+
+stock_daily1_unlist <- unlist(stock_daily1[c(1)])
+stock_daily2 <- as.numeric(stock_daily1_unlist[1:nr_daily]) 
+newdata_daily <- data.frame(stock_daily2)
+
+for (i in 2:nc_daily) {
+  newdata_daily <- cbind(newdata_daily, 
+                         data.frame(as.numeric(
+                           unlist(stock_daily1[c(i)])[1:nr_daily])))
+}
+```
+
+```{r}
+#getting the name of each column to create the new data
+col_name_daily <- c()
+for (i in 1:nc_daily) {
+  col_name_daily<-append(col_name_daily,names(stock_daily1)[i])
+}
+
+colnames(newdata_daily) <- col_name_daily
+#head(newdata_daily)
+```
+
+```{r}
+#dropping the column of dates and the first two lines giving the code and the currency used by each companies
+stock_monthly1 <- stock_monthly[-c(1, 2), ]
+stock_monthly1 <- stock_monthly1[ ,-c(1)]
+
+date_month <- seq(as.Date("2015-01-01"), as.Date("2021-06-01"),by="1 months")
+```
+
+Another problem is the fact that the values of this dataframe are strings so there will be errors when we will have to apply some computations on those numbers. That is why we have to create a new data where there will be only numbers (double).
+
+```{r, message=FALSE}
+nc_month <- ncol(stock_monthly1) #number of variables (columns)
+nr_month <- nrow(stock_monthly1) #number of observations (rows)
+
+stock_monthly1_unlist <- unlist(stock_monthly1[c(1)])
+stock_monthly2 <- as.numeric(stock_monthly1_unlist[1:nr_month]) 
+newdata_month <- data.frame(stock_monthly2)
+
+for (i in 2:nc_month) {
+  newdata_month <- cbind(newdata_month, 
+                    data.frame(as.numeric(
+                      unlist(stock_monthly1[c(i)])[1:nr_month])))
+}
+```
+
+```{r}
+#getting the name of each column to create the new data
+col_name_month <- c()
+for (i in 1:nc_month) {
+  col_name_month<-append(col_name_month,names(stock_monthly1)[i])
+}
+
+colnames(newdata_month) <- col_name_month
+#head(newdata_month)
+```
+
+
+
+## Question 1
+
+### Returns
+Returns of daily stocks.
+```{r}
+as<- c()
+for (j in 1:nr_daily){
+  as<-append(as,(newdata_daily[j,1]-newdata_daily[j-1,1])/newdata_daily[j-1,1])
+}
+data_daily_returns1<-data.frame(as)
+
+for(i in 2:nc_daily){
+  as<- c()
+  for (j in 1:nr_daily){
+    as<-append(as,(newdata_daily[j,i]-newdata_daily[j-1,i])/newdata_daily[j-1,i])
+  }
+  data_daily_returns1<-cbind(data_daily_returns1, data.frame(as))
+}
+
+col_daily_returnsname <- paste("RETURNS", col_name_daily)
+colnames(data_daily_returns1) <- col_daily_returnsname
+#head(data_daily_returns1)
+```
+
+Returns of monthly stocks.
+```{r}
+as<- c()
+for (j in 1:nr_month+1){
+  as<-append(as,(newdata_month[j,1]-newdata_month[j-1,1])/newdata_month[j-1,1])
+}
+data_monthly_returns1<-data.frame(as)
+
+for(i in 2:nc_month){
+  as<- c()
+  for (j in 1:nr_month+1){
+    as<-append(as,(newdata_month[j,i]-newdata_month[j-1,i])/newdata_month[j-1,i])
+  }
+  data_monthly_returns1<-cbind(data_monthly_returns1, data.frame(as))
+}
+
+
+col_monthly_returnsname <- paste("RETURNS", col_name_month)
+colnames(data_monthly_returns1) <- col_monthly_returnsname
+#head(data_monthly_returns1)
+```
+
+
+We can also compute the returns using the times series.
+```{r}
+data_daily_returns1_TS <- data.frame(Return.calculate(as.timeSeries(cbind(date_daily,newdata_daily))))
+data_monthly_returns1_TS <- data.frame(Return.calculate(as.timeSeries(cbind(date_month,newdata_month))))
+#head(data_daily_returns1_TS)
+#head(data_monthly_returns1_TS)
+```
+
+
+### mean, standard deviation, variance, skewness and kurtosis for stocks at daily and monthly frequency.
+
+  - Daily : 
+Mean, standard deviation, variance, skewness and kurtosis for stocks at daily frequency
+```{r}
+a_daily <- c()
+a_daily <- append(a_daily, mean(unlist(na.omit(data_daily_returns1[1]))))
+a_daily <- append(a_daily,sd(unlist(na.omit(data_daily_returns1[1]))))
+a_daily <- append(a_daily, var(unlist(na.omit(data_daily_returns1[1]))))
+a_daily <- append(a_daily, skewness(unlist(na.omit(data_daily_returns1[1]))))
+a_daily <- append(a_daily, kurtosis(unlist(na.omit(data_daily_returns1[1]))))
+
+stats_daily <- data.frame(a_daily)
+
+for (i in 2:ncol(data_daily_returns1)){
+  a_daily <- c()
+  a_daily <- append(a_daily, mean(unlist(na.omit(data_daily_returns1[i]))))
+  a_daily <- append(a_daily,sd(unlist(na.omit(data_daily_returns1[i]))))
+  a_daily <- append(a_daily, var(unlist(na.omit(data_daily_returns1[i]))))
+  a_daily <- append(a_daily, skewness(unlist(na.omit(data_daily_returns1[i]))))
+  a_daily <- append(a_daily, kurtosis(unlist(na.omit(data_daily_returns1[i]))))
+  
+  stats_daily <- cbind(stats_daily, data.frame(a_daily))
+}
+
+stats_daily <- cbind(data.frame(c("mean", "standard deviation", "variance", "skewness", "kurtosis")),stats_daily)
+colnames(stats_daily) <- c(' ', col_name_daily)
+stats_daily
+```
+
+  - Monthly : 
+
+Mean, standard deviation, variance, skewness and kurtosis for stocks at monthly frequency
+```{r}
+a_monthly <- c()
+a_monthly <- append(a_monthly, mean(unlist(na.omit(data_monthly_returns1[1]))))
+a_monthly <- append(a_monthly,sd(unlist(na.omit(data_monthly_returns1[1]))))
+a_monthly <- append(a_monthly, var(unlist(na.omit(data_monthly_returns1[1]))))
+a_monthly <- append(a_monthly, skewness(unlist(na.omit(data_monthly_returns1[1]))))
+a_monthly <- append(a_monthly, kurtosis(unlist(na.omit(data_monthly_returns1[1]))))
+
+stats_monthly <- data.frame(a_monthly)
+
+for (i in 2:ncol(data_monthly_returns1)){
+  a_monthly <- c()
+  a_monthly <- append(a_monthly, mean(unlist(na.omit(data_monthly_returns1[i]))))
+  a_monthly <- append(a_monthly,sd(unlist(na.omit(data_monthly_returns1[i]))))
+  a_monthly <- append(a_monthly, var(unlist(na.omit(data_monthly_returns1[i]))))
+  a_monthly <- append(a_monthly, skewness(unlist(na.omit(data_monthly_returns1[i]))))
+  a_monthly <- append(a_monthly, kurtosis(unlist(na.omit(data_monthly_returns1[i]))))
+  
+  stats_monthly <- cbind(stats_monthly, data.frame(a_monthly))
+}
+
+stats_monthly <- cbind(data.frame(c("mean", "standard deviation", "variance", "skewness", "kurtosis")),stats_monthly)
+colnames(stats_monthly) <- c(' ', col_name_month)
+stats_monthly
+```
+
+In both, daily and monthly we can see that the means are very close to 0, which show the stationarity of returns.
+The standard variation are close to 0.01 in the daily case and 0.1 in the monthly case, so the dispersion of the sets of values is stronger in the monthly case.
+The variances are also close to 0, and the variances of the daily case are lower than the variances of the monthly case.
+Like skewness, kurtosis describes the shape of a probability distribution, here the kurtosis of the daily case are higher than in the monthly case. We can also talk about Leptokurtic for the daily set because the values are higher than 3. the samples have thicker than normal ends, and therefore imply more frequent abnormal values.
+
+## Question 2
+To have a better visibility, we are going to change the name of the columns, in numbers of their positions, it will be easy to find back the name of securities which we will need.
+```{r}
+daily<-na.omit(data_daily_returns1)
+colnames(daily) <- seq(1,nc_daily)
+covariance_daily<-cov(daily,method = c("pearson", "kendall", "spearman"))
+correlation_daily<-cor(daily,method = c("pearson", "kendall", "spearman"))
+corrplot(correlation_daily, type = "upper")
+```
+
+To understand, this correlation matrix there is a colorbar, the case at the intesection of two variables, for example the variable i and the variable j, we have to look at the intesection of the ligne i and the column j, and look at the color, more the color tends to blue more the coefficient tends to 1, and more the color tends to white more the coefficient tends to 0. The meaning of this is the closer the coefficient is to 1, the more correlated the variables are.    
+But because there are 81 variables it is a bit difficult to see the correlation between the variables, and to see the number of the row or the column that we want to select. 
+Let show this matrix in an another way, it will be less precise than the previous method but enough to select the securities for the question 3. 
+```{r}
+options(max.print=999999)
+symnum(correlation_daily, abbr.colnames=FALSE)
+```
+
+
+```{r}
+monthly <- na.omit(data_monthly_returns1)
+colnames(monthly)<-seq(1,nc_month)
+covariance_monthly<-cov(monthly,method = c("pearson", "kendall", "spearman"))
+
+correlation_monthly<-cor(monthly,method = c("pearson", "kendall", "spearman"))
+corrplot(correlation_monthly, type = "upper")
+```
+
+With the same reasons as for the daily case, we are plotting in a different way this matrix.
+```{r}
+symnum(correlation_monthly, abbr.colnames=FALSE)
+```
+
+## Question 3
+As long as the correlation is less than 1, holding various assets that are not perfectly correlated in a portfolio will offer a reduced risk exposure to a specific asset. On the basis of the correlation structure of the variance-covariance matrix, we can select a sample of 12 securities.
+
+### Daily
+```{r}
+securities_daily <- data.frame(newdata_daily[2],newdata_daily[14],newdata_daily[16],newdata_daily[28],newdata_daily[29],newdata_daily[30],newdata_daily[37],newdata_daily[45],newdata_daily[54],newdata_daily[55],newdata_daily[69],newdata_daily[81])
+
+securities_daily_name <- colnames(securities_daily)
+```
+
+### Monthly
+```{r}
+securities_monthly <- data.frame(newdata_month[2],newdata_month[14],newdata_month[16],newdata_month[28],newdata_month[29],newdata_month[30],newdata_month[37],newdata_month[46],newdata_month[56],newdata_month[57],newdata_month[71],newdata_month[83])
+
+securities_monthly_name <- colnames(securities_monthly)
+```
+
+```{r}
+print("the twelve securities that we select are :")
+paste(securities_monthly_name)
+```
+
+
+```{r}
+portfolio_daily <- subset(newdata_daily,
+                          select=c("ECOSUNTEK","ASTALDI","ALERION CLEAN POWER",
+                                   "ENERVIT","VALSOIA",
+                                   "CENTRALE DEL LATTE D'ITALIA",
+                                   "BORGOSESIA RSP","MONRIF","FULLSIX",
+                                   "EXPRIVIA","VIANINI INDR.","SAFILO GROUP"))
+
+portfolio_monthly <- subset(newdata_month,
+                          select=c("ECOSUNTEK","ASTALDI","ALERION CLEAN POWER",
+                                   "ENERVIT","VALSOIA",
+                                   "CENTRALE DEL LATTE D'ITALIA",
+                                   "BORGOSESIA RSP","MONRIF","FULLSIX",
+                                   "EXPRIVIA","VIANINI INDR.","SAFILO GROUP"))
+
+
+
+ 
+portfolio_daily_returns <- subset(data_daily_returns1,
+                                select=c("RETURNS ECOSUNTEK","RETURNS ASTALDI",
+                                         "RETURNS ALERION CLEAN POWER",
+                                         "RETURNS ENERVIT",
+                                         "RETURNS VALSOIA",
+                                         "RETURNS CENTRALE DEL LATTE D'ITALIA",
+                                         "RETURNS BORGOSESIA RSP",
+                                         "RETURNS MONRIF","RETURNS FULLSIX",
+                                         "RETURNS EXPRIVIA",
+                                         "RETURNS VIANINI INDR.",
+                                         "RETURNS SAFILO GROUP"))
+
+portfolio_monthly_returns <- subset(data_monthly_returns1,
+                                select=c("RETURNS ECOSUNTEK","RETURNS ASTALDI",
+                                         "RETURNS ALERION CLEAN POWER",
+                                         "RETURNS ENERVIT",
+                                         "RETURNS VALSOIA",
+                                         "RETURNS CENTRALE DEL LATTE D'ITALIA",
+                                         "RETURNS BORGOSESIA RSP",
+                                         "RETURNS MONRIF","RETURNS FULLSIX",
+                                         "RETURNS EXPRIVIA",
+                                         "RETURNS VIANINI INDR.",
+                                         "RETURNS SAFILO GROUP"))
+
+```
+
+## Question 4
+
+```{r}
+daily1 <- cbind(date_daily, portfolio_daily)
+monthly1 <- cbind(date_month, portfolio_monthly)
+daily2 <- daily1 %>% select(date_daily, colnames(daily1[-1])) %>% 
+  gather(key = "securities", value = "price", -date_daily)
+monthly2 <- monthly1 %>% select(date_month, colnames(monthly1[-1])) %>% 
+  gather(key = "securities", value = "price", -date_month)
+```
+
+```{r}
+dl <- ggplot(daily2, aes(x = date_daily , y = price)) + 
+  geom_line(aes(color = securities))
+ml <- ggplot(monthly2, aes(x = date_month , y = price)) + 
+  geom_line(aes(color = securities))
+
+ggarrange(dl, ml, 
+          labels = c("Day", "Month"),
+          ncol = 1, nrow = 2)
+```
+We can see that for both, daily and monthly, the pattern is almost the same in pacing.
+All of those securities seem to have the same pattern with just a bit differe,t for the price, except for Valsoia, Alerion clean power and Ecosuntek which seem to have more consistent variations.
+
+## Question 5
+
+```{r}
+maxratioPortfolio_daily <- maxratioPortfolio(data = as.timeSeries(na.omit(daily1)),
+                                         spec = portfolioSpec(),
+                                         constraints = "LongOnly")
+maxratioPortfolio_monthly <- maxratioPortfolio(data = as.timeSeries(na.omit(monthly1)),
+                                         spec = portfolioSpec(),
+                                         constraints = "LongOnly")
+
+weightsPie(maxratioPortfolio_daily)
+weightsPie(maxratioPortfolio_monthly)
+```
+In our case, we can see a large difference between the weight, with some which seem to be lower or equal to 0.
+
+
+## Question 7
+
+### mean, standard deviations, variance, skewness and kurtosis of your optimal mean-variance portfolios, both for daily and monthly frequency
+
+
+```{r}
+weights_d <- maxratioPortfolio_daily@portfolio@portfolio[["weights"]]
+
+daily_stats <- c()
+daily_stats<-append(daily_stats,
+                weighted.mean(apply(na.omit(portfolio_daily_returns),2,mean),
+                                  weights_d))
+daily_stats<-append(daily_stats,
+                weighted.mean(apply(na.omit(portfolio_daily_returns),2,var),
+                                  weights_d))
+daily_stats<-append(daily_stats,
+                weighted.mean(apply(na.omit(portfolio_daily_returns),2,stdev),
+                                  weights_d))
+daily_stats<-append(daily_stats,
+                weighted.mean(apply(na.omit(portfolio_daily_returns),2,skewness),
+                                  weights_d))
+daily_stats<-append(daily_stats,
+                weighted.mean(apply(na.omit(portfolio_daily_returns),2,kurtosis),
+                                  weights_d))
+
+weights_m <- maxratioPortfolio_monthly@portfolio@portfolio[["weights"]]
+
+monthly_stats <- c()
+monthly_stats<-append(monthly_stats,
+                weighted.mean(apply(na.omit(portfolio_monthly_returns),2,mean),
+                                  weights_m))
+monthly_stats<-append(monthly_stats,
+                weighted.mean(apply(na.omit(portfolio_monthly_returns),2,var),
+                                  weights_m))
+monthly_stats<-append(monthly_stats,
+                weighted.mean(apply(na.omit(portfolio_monthly_returns),2,stdev),
+                                  weights_m))
+monthly_stats<-append(monthly_stats,
+                weighted.mean(apply(na.omit(portfolio_monthly_returns),2,skewness),
+                                  weights_m))
+monthly_stats<-append(monthly_stats,
+                weighted.mean(apply(na.omit(portfolio_monthly_returns),2,kurtosis),
+                                  weights_m))
+
+
+
+stats_name <- c("mean", "var", "stdev", "skewness", "kurtosis")
+stats<-cbind(data.frame(stats_name), data.frame(daily_stats), data.frame(monthly_stats))
+colnames(stats)<-c(" ", "Daily", "Monthly")
+stats
+```
+
+## Question 8
+```{r}
+shortFrontier_daily<-
+  portfolioFrontier(as.timeSeries(na.omit(portfolio_daily_returns)),
+                                 spec = portfolioSpec(),
+                                 constraints = "LongOnly")
+tailoredFrontierPlot(object = shortFrontier_daily,risk = "Cov")
+
+
+shortFrontier_monthly<-
+  portfolioFrontier(as.timeSeries(na.omit(portfolio_monthly_returns)),
+                                 spec = portfolioSpec(),
+                                 constraints = "LongOnly")
+tailoredFrontierPlot(object = shortFrontier_monthly,risk = "Cov")
+```
+The efficient frontier is the set of optimal portfolios that offer the highest expected return for a defined level of risk.
+We can say that all the securities that we choose are sub-optimal.
+
+## Question 9
+```{r}
+ftse_ita_daily1 <- ftse_ita_daily[-c(1, 2), ]
+ftse_ita_daily1 <- ftse_ita_daily1[ ,-c(1)]
+ftse_ita_daily1 <- na.omit(ftse_ita_daily1)
+ftse_ita_daily1 <- as.numeric(unlist(ftse_ita_daily1))
+  
+ftse_ita_monthly1 <- ftse_ita_monthly[-c(1, 2), ]
+ftse_ita_monthly1 <- ftse_ita_monthly1[ ,-c(1)]
+ftse_ita_monthly1 <- na.omit(ftse_ita_monthly1)
+ftse_ita_monthly1 <- as.numeric(unlist(ftse_ita_monthly1))
+
+
+ftse_ita_daily_stat <- c(mean(ftse_ita_daily1))
+ftse_ita_daily_stat <- append(ftse_ita_daily_stat,
+                              var(ftse_ita_daily1))
+ftse_ita_daily_stat <- append(ftse_ita_daily_stat,
+                              sqrt(var(ftse_ita_daily1)))
+ftse_ita_daily_stat <- append(ftse_ita_daily_stat,
+                              skewness(ftse_ita_daily1))
+ftse_ita_daily_stat <- append(ftse_ita_daily_stat,
+                              kurtosis(ftse_ita_daily1))
+
+ftse_ita_monthly_stat <- c(mean(ftse_ita_monthly1))
+ftse_ita_monthly_stat <- append(ftse_ita_monthly_stat,
+                                var(ftse_ita_monthly1))
+ftse_ita_monthly_stat <- append(ftse_ita_monthly_stat,
+                                sqrt(var(ftse_ita_monthly1)))
+ftse_ita_monthly_stat <- append(ftse_ita_monthly_stat,
+                                skewness(ftse_ita_monthly1))
+ftse_ita_monthly_stat <- append(ftse_ita_monthly_stat,
+                                kurtosis(ftse_ita_monthly1))
+
+
+
+ftse_ita_stats<-cbind(data.frame(stats_name), data.frame(ftse_ita_daily_stat),
+                      data.frame(ftse_ita_monthly_stat))
+colnames(ftse_ita_stats)<-c(" ", "Daily", "Monthly")
+ftse_ita_stats
+```
+
+## Question 10
+
+```{r}
+ftse_ita_daily1 <- ftse_ita_daily[-c(1, 2), ]
+ftse_ita_daily1 <- ftse_ita_daily1[ ,-c(1)]
+
+nr_ftsedaily <- nrow(ftse_ita_daily1) #number of observations (rows)
+
+ftse_ita_daily1_unlist <- unlist(ftse_ita_daily1[c(1)])
+ftse_ita_daily2 <- as.numeric(ftse_ita_daily1_unlist[1:nr_daily]) 
+newdata_ftsedaily <- data.frame(ftse_ita_daily2)
+
+
+colnames(newdata_ftsedaily) <- colnames(ftse_ita_daily[2])
+
+as<- c()
+for (j in 2:nr_ftsedaily){
+  as<-append(as,(newdata_ftsedaily[j,1]-newdata_ftsedaily[j-1,1])/newdata_ftsedaily[j-1,1])
+}
+ftse_daily_returns<-data.frame(as)
+colnames(ftse_daily_returns) <- paste("RETURN ", colnames(ftse_ita_daily[2]))
+
+#head(newdata_ftsedaily)
+#head(ftse_daily_returns)
+```
+
+
+```{r}
+ftse_ita_monthly1 <- ftse_ita_monthly[-c(1, 2), ]
+ftse_ita_monthly1 <- ftse_ita_monthly1[ ,-c(1)]
+
+nr_ftsemonthly <- nrow(ftse_ita_monthly1) #number of observations (rows)
+
+ftse_ita_monthly1_unlist <- unlist(ftse_ita_monthly1[c(1)])
+ftse_ita_monthly2 <- as.numeric(ftse_ita_monthly1_unlist[1:nr_daily]) 
+newdata_ftsemonthly <- data.frame(ftse_ita_monthly2)
+
+
+colnames(newdata_ftsemonthly) <- colnames(ftse_ita_monthly[2])
+
+as<- c()
+for (j in 2:nr_ftsemonthly){
+  as<-append(as,(newdata_ftsemonthly[j,1]-newdata_ftsemonthly[j-1,1])/newdata_ftsemonthly[j-1,1])
+}
+ftse_monthly_returns<-data.frame(as)
+colnames(ftse_monthly_returns) <- paste("RETURN ", colnames(ftse_ita_monthly[2]))
+
+#head(newdata_ftsemonthly)
+#head(ftse_monthly_returns)
+```
+
+
+```{r}
+beta_daily<-c()
+for (i in 1:12){
+  beta_daily <- append(beta_daily,cov(portfolio_daily_returns[,i],ftse_daily_returns)/var(ftse_daily_returns))
+}
+
+securities_beta_daily <- cbind(data.frame(securities_daily_name),data.frame(beta_daily))
+colnames(securities_beta_daily)<-c("Securities","Beta")
+securities_beta_daily
+```
+
+
+```{r}
+beta_monthly<-c()
+for (i in 1:12){
+  beta_monthly <- append(beta_monthly,cov(portfolio_monthly_returns[-c(78),i],ftse_monthly_returns)/var(ftse_monthly_returns))
+}
+
+securities_beta_monthly <- cbind(data.frame(securities_daily_name),data.frame(beta_monthly))
+colnames(securities_beta_monthly)<-c("Securities","Beta")
+securities_beta_monthly
+```
+
+
+```{r}
+beta_portfolio_daily<- weighted.mean(beta_daily,maxratioPortfolio_daily@spec@portfolio[["weights"]])
+beta_portfolio_monthly<- weighted.mean(beta_monthly,maxratioPortfolio_monthly@spec@portfolio[["weights"]])
+portfolio_beta <- cbind(data.frame(c("Daily", "Monthly")), data.frame(c(beta_portfolio_daily,beta_portfolio_monthly)))
+colnames(portfolio_beta)<-c(" ", "Beta")
+portfolio_beta
+```
+In finance, $\beta$ measures the volatility of returns of a stock.
+The beta coefficient can be interpreted as follows:
+  - $\beta=1$ exactly as volatile as the market
+  - $\beta>1$ more volatile than the market
+  - $0<\beta<1$ less volatile than the market
+  - $\beta=0$ uncorrelated to the market
+  - $\beta<0$ negatively correlated to the market
+
+
+## Question 11
+The Security Market Line is a visual representation of the capital asset pricing model 
+To compute it, the formula is:
+$$SML = RFR + [\beta * (EMR – RFR)]$$
+with
+  SML : Security Market Line
+  RFR : Risk-Free Rate
+  EMR : Expected Market Return
+  
+We know that the Risk-Free security is equal to 0.5 per cent (0.005).
+Let's compute the Security Market Line for two securities we have chosen and then for our portfolio. 
+
+
+
+```{r}
+RFR <- 0.005
+beta1_daily <- securities_beta_daily[9,2]
+beta2_daily <- securities_beta_daily[1,2]
+
+beta1_monthly <- securities_beta_monthly[5,2]
+beta2_monthly <- securities_beta_monthly[6,2]
+
+expected_return_daily<-apply(na.omit(portfolio_daily_returns),2,mean)
+expected_return_monthly<-apply(na.omit(portfolio_monthly_returns),2,mean)
+```
+
+```{r}
+beta1_daily
+beta2_daily
+c(beta1_daily,beta2_daily,portfolio_beta[,2])
+```
+
+```{r}
+SML_portfolio = function(beta){
+  return (RFR +beta*(mean(ftse_monthly_returns[,1])-RFR))
+}
+
+SML_portfolio_d = function(beta){
+  return (RFR +beta*(mean(ftse_daily_returns[,1])-RFR))
+}
+
+expected_return_portfolio_daily <- weighted.mean(
+  expected_return_daily,maxratioPortfolio_daily@spec@portfolio[["weights"]])
+expected_return_portfolio_monthly <- weighted.mean(
+  expected_return_monthly,maxratioPortfolio_monthly@spec@portfolio[["weights"]])
+
+sml_daily<-data.frame(c(beta1_daily,beta2_daily,portfolio_beta[,2]),
+                      c(expected_return_daily[1],expected_return_daily[11],
+                        expected_return_portfolio_daily),
+                      securities_beta_daily[,2], 
+                      c(RFR +securities_beta_daily[,2]*(mean(ftse_daily_returns[,1])- RFR)),
+                      c("ECOSUNTEK","VIANINI INDR.","portfolio"))
+
+ggplot(sml_daily) +
+  geom_line(aes(x=sml_daily[,3],y=sml_daily[,4])) +
+  geom_point(aes(x=sml_daily[,1],y=sml_daily[,2],col=sml_daily[,5]))
+
+
+sml_monthly<-data.frame(c(beta1_monthly,beta2_monthly,portfolio_beta[,2]),
+                      c(expected_return_monthly[1],expected_return_monthly[11],
+                        expected_return_portfolio_monthly),
+                      securities_beta_monthly[,2], 
+                      c(RFR +securities_beta_monthly[,2]*(mean(ftse_monthly_returns[,1])-RFR)),
+                      c("ECOSUNTEK","VIANINI INDR.","portfolio"))
+
+ggplot(sml_monthly) +
+  geom_line(aes(x=sml_monthly[,3],y=sml_monthly[,4])) +
+  geom_point(aes(x=sml_monthly[,1],y=sml_monthly[,2],col=sml_monthly[,5]))
+```
+
+
+## Question 12
+
+ The Black-Litterman Formula :
+$$E [R] = [(τΣ)^{-1} + P'ΩP]^{-1} * [(τΣ)^{-1}Π + P'Ω^{-1}Q]$$
+where
+E[R] is the new (posterior) Combined Return Vector (N x 1 column vector);
+τ is a scalar;
+Σ is the covariance matrix of excess returns (N x N matrix);
+P is a matrix that identifies the assets involved in the views (K x N matrix or 1 x N row vector in the special case of 1 view); 
+Ω is a diagonal covariance matrix of error terms from the expressed views representing the uncertainty in each view (K x K matrix);
+Π is the Implied Equilibrium Return Vector (N x 1 column vector); 
+Q is the View Vector (K x 1 column vector). 
+```{r}
+Black_Litterman=function(exc_ret,P,Q){   
+  sigma <- cov(exc_ret)
+  omega <- tcrossprod(P %*% sigma, P)
+  pi<-weights_d
+  mu<-  sigma %*% ii
+  tau<-0.005
+  mu_BL <- mu - tau*sigma %*% t(P) %*% (omega + solve(P %*% (tau*sigma) %*% t(P)) %*% (Q - P %*% mu))
+  sigma_BL <- tau*sigma - tau*sigma %*% t(P) %*% (omega + solve(P %*% (tau*sigma) %*% t(P)) %*% (P %*% (tau*sigma)))
+  return (mu_BL, sigma_BL,Mu)
+}
+
+#P will be the matrix viewi and qi the pourcentage 
+view1 <- matrix(c(1,0,0,0,0,0,0,0,0,0,0,0),nrow =1, ncol=12) 
+q1 <- 0.05
+view2 <- matrix(c(0,1,0,0,0,0,0,0,0,0,0,0),nrow =1, ncol=12) 
+q2 <- 0.02
+view3 <- matrix(c(0,0,0,0,1,0,0,0,0,-1,0,0),nrow =1, ncol=12) 
+q3 <- 0.05
+view4 <- matrix(c(0,0,0,0,0,0,0,-0.5,0.5,0,-0.5,0),nrow =1, ncol=12)
+q4 <- 0.02
+```
+
+## Question 13
+## Question 14
+## Question 15
+
+
+
+
+
+
+
+
