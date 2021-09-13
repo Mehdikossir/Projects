@@ -1,0 +1,583 @@
+---
+title: "Projet-MRR"
+output: html_document
+---
+
+
+Data used for this analysis comes from R package «spls», it’s the yeast Cell Cycle dataset used in
+Chun and Keles (2010).
+ 
+
+We first import the data into R using a data frame. 
+```{r }
+library(spls)
+data(yeast)
+
+Data <- data.frame(yeast)
+
+
+
+```
+In order to identify the nature of our data we have separate it into a matrix X which is the matrix of predictors matrix Y which is the target
+variable.
+
+```{r }
+X<-data.frame(yeast$x)
+names(X)
+dim(X)
+
+```
+Our matrix X is the chromatin immunoprecipitation on chip (ChIP-chip) data of Lee et al. (2002)
+and it contains the binding information for 106 transcription factors.
+
+
+Our matrix Y is cell cycle gene expression data (Spellman et al., 1998) of 542 genes from an α factor-
+based experiment. Each column corresponds to mRNA levels measured at every 7 minutes during 119
+minutes (a total of 18 measurements).
+```{r }
+Y<-data.frame(yeast$y)
+dim(Y)
+Y
+```
+
+In order to identify the relationships between transcription factors(X) and gene expression(Y), we need to summarize our 18 measurements.
+We plot the different values of our variable Y as a function of time, we notice that we have a sinusoidal shape as we notice in figure below.
+```{r }
+
+matplot(t(Y),type="l")
+
+
+Ymat <-as.matrix(Y)
+newdata <- Y[1:45,]
+
+t<-c(seq(1, 120, by = 7))
+library(ggplot2)
+library(zoo)
+z <- zoo(t(newdata), t)  # use t so that series are columns
+
+autoplot(z, facet = NULL) + xlab("time") +ylab("mRNA levels measured evry 7 minutes")
+```
+As we can see we can assume that we have a gaussian process. Remembering that the black thick line in the boxplots (figure 2) is the median and that the colored part of the boxplot contains 50% of the data and observing the shape of the distribution (figure 3) we can already see that the distribution is approximately symmetric for different genes and that the means are around zero.
+```{r }
+
+library(moments)
+
+boxplot(t(newdata), xlab ="Time", col = rainbow(45))
+
+   ## set plot background color
+hist(t(Y),main="Distribution of mRNA levels",xlab="time",breaks="FD",col="blue")
+
+
+
+```
+
+After doing some research, we note that our data are log2 transformed that’s why we have nega- tive values. By log-transforming, the dependence of the variance of expression measurements on the expression level is reduced and the data becomes better-behaved for statistical testing.
+In this case using the arithmetic mean to summarize is not the best approach. When the arithme- tic mean is calculated from normalized numbers, the results are meaningless. Instead, we will first use geometric mean to have more useful conclusions.
+
+```{r }
+library(dplyr)
+
+Y<-Y %>% 
+     mutate(geomeans=exp(rowMeans(., na.rm=TRUE)))
+
+YeastData <-data.frame(cbind(X,Y[,"geomeans"]))
+
+dimnames(YeastData)[[2]][107]<-"Y"
+
+YeastData
+
+```
+ that we have summarized Y in a single column, we have our first data model. The goal now is to discover the corresponding network of gene–TF relationships, which is known as a gene regulatory network.
+
+
+We will start by doing **A multiple linear regression model will be used using all variables**.
+
+We note :
+
+**$Y :Target Variable -> Gene expression**
+
+
+**$X: Transcriptions factors**
+
+The ordinary least squares method is used for regression, fitting a simple linear model to the data, using the function "lm".
+
+
+```{r }
+modreg_yeast= lm(Y~.,data=YeastData)
+
+par(mfrow = c(2, 2))  # Split the plotting panel into a 2 x 2 grid
+plot(modreg_yeast)  # Plot the model information
+```
+```{r }
+# Obtain predicted and residual values
+summary <-data.frame(YeastData)
+summary$predicted <- predict(modreg_yeast)
+summary$residuals <- residuals(modreg_yeast)
+tail(summary)
+```
+
+```{r }
+library(ggplot2)
+ggplot(summary, aes(x = Y, y = residuals)) + geom_pointrange(aes(ymin = 0, ymax = residuals),color="darkred") + 
+  geom_hline(yintercept = 0, linetype = 3) + 
+  ggtitle("residuals vs. real target variablesn")
+```
+As we can see our data model is not well constructed and this is due to the collinearity between the variables
+
+The hypothesis of normality on the residuals is rejected with a 5% risk and therefore we cannot apply the student test to know the influence of the variables, this is due to the high correlation between the transcription factors.
+
+```{r }
+library('ggpubr')
+ggqqplot(summary$residuals)
+shapiro.test(summary$residuals)
+
+```
+The adjusted R-squared adjusts for the number of terms in the model. Importantly, its value increases only when the new term improves the model fit more than expected by chance alone thats why we use it in our model.
+
+We notice that the value of the adjusted $R^2$ is far from 1, it means that our regression model is not well chosen.
+```{r }
+library('Metrics')
+
+summary(modreg_yeast)$adj.r.squared 
+
+rmse(YeastData$Y,modreg_yeast$fitted.values )
+```
+As we can see we have an adjusted $R^2$ very close to 0 but a very small RMSE which is not normal.
+We will try to do the regression with only one transcription factor to see if we have a problem with the chosen model.
+
+
+```{r }
+modreg_yeastwith1variable= lm(Y~ARG81_YPD,data=YeastData)
+summary1 <-data.frame(YeastData)
+summary1$predicted <- predict(modreg_yeastwith1variable)
+summary1$residuals <- residuals(modreg_yeastwith1variable)
+summary(modreg_yeastwith1variable)$adj.r.squared 
+
+rmse(YeastData$Y,modreg_yeastwith1variable$fitted.values )
+
+```
+So there is clearly a problem with the model.
+
+To solve this problem we use another summary for y which is the sum of absolute values
+
+```{r }
+library(dplyr)
+Y1<-data.frame(yeast$y)
+
+Y1<-Y1 %>% 
+     mutate(absrowsums=rowSums(abs(.), na.rm=TRUE))
+
+
+YeastData1 <-data.frame(cbind(X,Y1[,"absrowsums"]))
+
+dimnames(YeastData1)[[2]][107]<-"Y"
+
+YeastData1
+
+```
+
+```{r }
+modreg_yeast1= lm(Y~.,data=YeastData1)
+
+par(mfrow = c(2, 2))  # Split the plotting panel into a 2 x 2 grid
+plot(modreg_yeast1)  # Plot the model information
+```
+```{r }
+# Obtain predicted and residual values
+summary2 <-data.frame(YeastData1)
+summary2$predicted <- predict(modreg_yeast1)
+summary2$residuals <- residuals(modreg_yeast1)
+tail(summary2)
+```
+```{r }
+library(ggplot2)
+ggplot(summary2, aes(x = Y, y = residuals)) + geom_pointrange(aes(ymin = 0, ymax = residuals),color="darkred") + 
+  geom_hline(yintercept = 0, linetype = 3) + 
+  ggtitle("residuals vs. real target variables")+
+  ylab("Residuals") + xlab("Gene expression")
+```
+```{r }
+library('ggpubr')
+ggqqplot(summary2$residuals)
+shapiro.test(summary2$residuals)
+
+```
+```{r }
+library('Metrics')
+
+summary(modreg_yeast1)$adj.r.squared 
+
+rmse(YeastData1$Y,modreg_yeast1$fitted.values )
+```
+
+To solve the problem of collinearity we will use **stepwise regression, lasso and ridge regression**.This consists of ejecting irrelevant variables and understanding/detecting redundant variables.
+
+We start with Forward regression
+
+```{r }
+FitStart = lm(Y ~ 1 , data=YeastData1)
+regforward=step(FitStart,direction='forward', scope=formula(modreg_yeast1 ))
+
+
+```
+
+```{r}
+
+summary(regforward)
+AIC(regforward)
+
+```
+
+### Backward regression
+```{r}
+
+regbackward=step(modreg_yeast1 ,direction='backward')
+
+```
+
+```{r}
+
+summary(regbackward)
+
+AIC(regbackward)
+```
+
+### Stepwise regression
+```{r }
+regboth=step(modreg_yeast1,direction='both') 
+
+
+```
+
+```{r}
+formula(regboth)
+
+summary(regboth)
+AIC(regboth)
+
+```
+We notice that we have a slight improvement in the value of adjusted $R^2$ 
+
+Note that the smallest value of the AIC is 2727.707 using the subset of transcription factors (ARG81_YPD + CAD1_YPD + CBF1_YPD + DAL82_YPD + FHL1_YPD + 
+    FZF1_YPD + GCR1_YPD + HIR2_YPD + IXR1_YPD + MBP1_YPD + MET31_YPD + 
+    MSN4_YPD + NDD1_YPD + PUT3_YPD + RAP1_YPD + RFX1_YPD + RIM101_YPD + 
+    ROX1_YPD + SFP1_YPD + SIP4_YPD + SOK2_YPD + STE12_YPD + SUM1_YPD + 
+    SWI5_YPD + SWI6_YPD + YJL206C_YPD + ZMS1_YPD + STP1_YPD + 
+    HAP4_YPD)
+
+To test the new model, the initial data set is randomly separated into two data frames containing 75% of the observations (the "Training" data set, TabTrain) and 25% of the remaining observations (the "Test" data set, TabTest).
+
+```{r }
+library(dplyr)
+
+NewYeastData1 <- YeastData1%>%select(ARG81_YPD , CAD1_YPD , CBF1_YPD  ,DAL82_YPD , FHL1_YPD , 
+    FZF1_YPD , GCR1_YPD , HIR2_YPD , IXR1_YPD , MBP1_YPD , MET31_YPD , 
+    MSN4_YPD , NDD1_YPD , PUT3_YPD , RAP1_YPD , RFX1_YPD , RIM101_YPD , 
+    ROX1_YPD , SFP1_YPD , SIP4_YPD , SOK2_YPD , STE12_YPD , SUM1_YPD, 
+    SWI5_YPD , SWI6_YPD , YJL206C_YPD , ZMS1_YPD , STP1_YPD , 
+    HAP4_YPD,Y)
+
+
+```
+
+```{r }
+data.frame(
+ Subset_of_Tfs_used= t(names(NewYeastData1))
+
+)
+
+
+```
+```{r }
+library('caTools')
+split = sample.split(NewYeastData1, SplitRatio = 0.75)
+TabTrain = subset(NewYeastData1, split == TRUE)
+TabTest = subset(NewYeastData1, split == FALSE)
+
+```
+
+```{r }
+modreg_yeast_train <-lm(Y~.,data=TabTrain)
+
+```
+
+```{r }
+library('Metrics')
+summary(modreg_yeast_train)$adj.r.squared 
+
+```
+
+```{r }
+# Predict on test: p
+p<-predict(modreg_yeast_train,newdata=TabTest)
+
+error<-p-TabTest$Y
+RMSE<-sqrt(mean(error^2))
+RMSE
+```
+We note that we were able to reduce the number of variables while maintaining the predictive quality of the model.
+
+We will use the **MASS** library, which offers a wide range of tools that can be used to
+are valuable in exploratory analysis.
+
+### Ridge regression
+
+We transform our explanatory variables to reduced centered variables so that they are all on the same scale.
+
+```{r }
+
+scaled.tab <- data.frame(scale(YeastData1, center=FALSE))
+
+library('caTools')
+set.seed(123)
+split_ridge = sample.split(scaled.tab, SplitRatio = 0.75)
+TabTrain_ridge = subset(scaled.tab, split == TRUE)
+TabTrain_ridge <- data.frame(scale(TabTrain_ridge, center=TRUE))
+
+TabTest_ridge = subset(scaled.tab, split == FALSE)
+
+TabTest_ridge <- data.frame(scale(TabTest_ridge, center=TRUE))
+
+xTrain <- as.matrix(TabTrain_ridge[,-107])
+
+yTrain <- TabTrain_ridge$Y
+
+
+
+```
+
+```{r }
+
+
+xTest <- as.matrix(TabTest_ridge[,-107])
+
+yTest<- TabTest_ridge$Y
+
+
+
+```
+
+At the end of the learning process, we have a vector of coefficients $\beta$.
+i for every $\lambda_i$.
+The more $\lambda_i$ increases, the higher the $\beta$ standard.
+$i$ decreases. All coefficients are zero when $\lambda=\lambda_{max}$.
+
+```{r }
+library("MASS")
+ridge_yeast <- lm.ridge(Y~.,TabTrain_ridge,lambda =seq(0,20,0.1))
+```
+
+The minimum error is displayed.
+```{r }
+#min de l'erreur en cross-validation
+print(min(ridge_yeast$GCV))
+```
+Then we look for the $\lambda^*$ corresponding to this error.
+```{r }
+#lambda qui minimise l'erreur
+lambda_min<-as.numeric(names(which.min(ridge_yeast$GCV)))
+print(log(lambda_min))
+```
+```{r }
+coefridge<-ridge_yeast$coef[,lambda_min]
+
+```
+Since the explanatory variables are expressed in the same units, sorting them according to the decreasing absolute value of the coefficients makes it possible to prioritize them and distinguish those that are the most influential in the regression.
+
+###  Prediction on the test sample for ridge
+
+```{r }
+
+library('Metrics')
+
+rss <- sum((Yridge - TabTest_ridge$Y.house.price.of.unit.area) ^ 2)
+tss <- sum((TabTest_ridge$Y.house.price.of.unit.area - mean(TabTest_ridge$Y.house.price.of.unit.area)) ^ 2)
+Yridge=as.matrix(xTest)%*%as.vector(coefridge)
+
+# Model performance metrics
+data.frame(
+  RMSE = rmse(Yridge, TabTest_ridge$Y)
+)
+
+
+```
+
+we notice with the ridge regression that the performance of the model has increased.
+
+### Lasso regression
+
+As you can see, the lasso allows you to delete variables by setting their weight to zero. This is the case if two variables are correlated. One will be selected by the Lasso, the other deleted. This is also its advantage over a ridge regression which will not select any variables.
+
+```{r}
+library('lars')
+reslasso=lars(xTrain,yTrain,type="lasso")
+
+par(mfrow=c(1,2))
+plot(reslasso)
+plot(c(reslasso$lambda,0),pch=16,type="b",col="blue")
+grid()
+```
+We will use the **glmnet** library.
+
+The graph displays the cross validation error as a function of the log $\lambda$. The dotted vertical line on the left indicates the log of the optimal value of the $\lambda$, which is the one that minimizes the prediction error. This value $\lambda$ will give the most accurate model.
+```{r}
+library(glmnet)
+set.seed(123)
+cv.lasso <- cv.glmnet(xTrain, yTrain, alpha = 1)
+plot(cv.lasso)
+```
+
+La valeur exact de $\lambda$ =
+
+```{r}
+lambda_best<-cv.lasso$lambda.min
+```
+
+En utilisant lambda.min comme meilleur $\lambda$, on obtient les coefficients de régression suivants :
+
+
+```{r}
+coef(cv.lasso, cv.lasso$lambda.min)
+```
+
+```{r}
+library(glmnet)
+lasso_model <- glmnet(xTrain, yTrain, alpha = 1, lambda = lambda_best)
+eval_results <- function(true, predicted, df) {
+  SSE <- sum((predicted - true)^2)
+  SST <- sum((true - mean(true))^2)
+  RMSE = sqrt(SSE/nrow(df))
+  
+  # Model performance metrics
+data.frame(
+    RMSE = RMSE
+)
+  
+}
+summary(lasso_model)
+predictions_test <- predict(lasso_model, s = lambda_best, newx = xTest)
+print(eval_results(yTest, predictions_test,TabTest))
+```
+```{r}
+# Build the model
+library('Metrics')
+set.seed(123)
+elastic <- train(
+  Y ~., data = TabTrain_ridge, method = "glmnet",
+  trControl = trainControl("cv", number = 10),
+  tuneLength = 10
+  )
+
+elastic$bestTune
+# Model coefficients
+coef(elastic$finalModel, elastic$bestTune$lambda)
+# Make predictions
+predictions_lasso <- elastic %>% predict(TabTest_ridge)
+# Model prediction performance
+data.frame(
+  RMSE = RMSE(predictions, TabTest_ridge$Y)
+)
+```
+
+
+
+### PCA
+
+In this section we’ll compute and visualize PCA on our data.
+
+```{r}
+library(factoextra)
+res.pca <- prcomp(YeastData1, scale = TRUE)
+fviz_eig(res.pca)
+```
+In our analysis, the first 35 principal components explain 77% of the variation. This is an acceptably large percentage.
+
+```{r}
+summary(res.pca)
+```
+We will preform a PCR (Principal components regression ), it's is a regression technique based on principal component analysis (PCA).
+
+The basic idea behind PCR is to calculate the principal components and then use some of these components as predictors in a linear regression model fitted using the typical least squares procedure.
+
+We’ll use the splited data used in the ridge and lasso regression to better compare between methods.Note that this data was already scaled .
+caret uses cross-validation to automatically identify the optimal number of principal components (ncomp) to be incorporated in the model.
+
+Here, we’ll test 10 different values of the tuning parameter ncomp. This is specified using the option tuneLength. The optimal number of principal components is selected so that the cross-validation error (RMSE) is minimized.
+```{r}
+library(caret)
+library(pls)
+# Build the model on training set
+set.seed(123)
+model <- train(
+  Y~., data = TabTrain_ridge, method = "pcr",
+  trControl = trainControl("cv", number = 10),
+  tuneLength = 10
+  )
+# Plot model RMSE vs different values of components
+plot(model)
+# Print the best tuning parameter ncomp that
+# minimize the cross-validation error, RMSE
+model$bestTune
+```
+```{r}
+# Summarize the final model
+summary(model$finalModel)
+```
+```{r}
+# Make predictions
+predictions <- model %>% predict(TabTest_ridge)
+# Model performance metrics
+data.frame(
+  RMSE = caret::RMSE(predictions, TabTest_ridge$Y)
+)
+```
+Taken together, cross-validation identifies ncomp = 6 as the optimal number of PCs that minimize the prediction error (RMSE) and explains enough variation in the predictors and in the outcome.
+
+A possible drawback of PCR is that we have no guarantee that the selected principal components are associated with the outcome. Here, the selection of the principal components to incorporate in the model is not supervised by the outcome variable.
+
+An alternative to PCR is the Partial Least Squares (PLS) regression, which identifies new principal components that not only summarizes the original predictors, but also that are related to the outcome. These components are then used to fit the regression model.
+
+```{r}
+# Build the model on training set
+set.seed(123)
+model2 <- train(
+  Y~., data = TabTrain_ridge, method = "pls",
+  scale = TRUE,
+  trControl = trainControl("cv", number = 10),
+  tuneLength = 10
+  )
+# Plot model RMSE vs different values of components
+plot(model2)
+# Print the best tuning parameter ncomp that
+# minimize the cross-validation error, RMSE
+model2$bestTune
+```
+```{r}
+# Make predictions
+predictions2 <- model2 %>% predict(TabTest_ridge)
+# Model performance metrics
+data.frame(
+  RMSE = caret::RMSE(predictions2, TabTest_ridge$Y)
+)
+```
+
+
+```{r}
+models <- list(pcr = model, pls =model2, elastic = elastic)
+resamples(models) %>% summary( metric = "RMSE") 
+```
+
+```{r}
+library("reprex")
+
+A<- (max(Y[1,] )-min(Y[1,])/2)
+C<-(max(Y[1,] )-min(Y[1,] )/2)
+y<-c(Ymat[1,])
+
+ SSTlm <- lm(y ~ sin(2*pi*t)+cos(2*pi*t),data=data.frame(t,y))
+ summary(SSTlm)
+
+ plot(y~t,data=data.frame(t,y))
+ lines(data.frame(t,y)$t, SSTlm$fitted,col=2)
+```
+
